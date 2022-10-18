@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chart</title>
+</head>
+
+<body>
+  <div style="display:flex; position:relative; padding-left: 50px; top: 70px">
+    <p> Filter - Months
+      <select name="date" id="dateSelect" class="date" style="border: 2px solid blue; background-color:darkblue; color:aqua;"></select>
+    </p>
+  </div>
+  <canvas id="graph"></canvas>
+
+  <script src="Chart.min.js"></script>
+  <script src="jquery-3.6.1.min.js"></script>
+  <script>
+    monthInWords = [
+      null,
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    ];
+    $.getJSON("task.php", response => {
+      let months = response.months;
+      let data = response.data;
+      let currentMonth = response.currentMonth;
+      let currentMonthData = response.currentMonthData;
+      // let dateByMonth = response.dateByMonth;
+      // console.log("here")
+      // console.log(dateByMonth)
+      let dataByMonth = response.dataByMonth;
+      window.periodicData = {
+        currentMonth : currentMonth,
+        months : months,
+        dataByMonth : dataByMonth
+      }
+      let selectElem = document.getElementById("dateSelect");
+      updateChart(currentMonth);
+      // console.log(getYValues(currentMonth, months, dataByMonth));
+      // console.log(getXValues(currentMonth, months, dataByMonth));
+      let html = "";
+      months.forEach(element => {
+        html += `<option value="${element}">${monthInWords[element]}</option>`
+      });
+      selectElem.innerHTML = html;
+      // console.log(html);
+
+    })
+    function getYValues(currentMonth, months, dataByMonth) {
+      yTimes = [];
+      // console.log(currentMonth, months, 'databymonth', dataByMonth)
+      indeMonth = months.includes(currentMonth) || months[0] == currentMonth ? 0 : 1;
+      console.log(Object.keys(months));
+
+      console.log(indeMonth);
+      console.log(months);
+      console.log(currentMonth);
+      if (indeMonth <= 0) {
+        previousMonth = null
+      }
+      else {
+        previousMonth = currentMonth - 1;
+        console.log(yTimes)
+        console.log("prev month y")
+        previousMonthName = monthInWords[previousMonth];
+        yTimes.push(previousMonth);
+      }
+      currentMonthName = monthInWords[currentMonth];
+      yTimes.push(currentMonth);
+      yValues = [];
+      yTimes.forEach(el => {
+        // yValues.push(...dataByMonth[el])
+        // console.log(el)
+        // console.log(currentMonth)
+        // console.log(dataByMonth[el])
+        dataByMonth[el].forEach(elem => {
+          zzz = elem.date.split(' ')[0].split('-');
+          yValues.push(monthInWords[parseInt(zzz[1])] + ' ' + zzz[2]);
+        })
+      })
+      return yValues;
+    }
+    function getXValues(currentMonth, months, dataByMonth) {
+      xTimes = [];
+      indeMonth = months.includes(currentMonth) || months[0] == currentMonth ? 0 : 1;
+      // console.log(currentMonth, months, 'databymonth', dataByMonth)
+      if (indeMonth <= 0) {
+        previousMonth = null
+      }
+      else {
+        console.log("prev month")
+        previousMonth = currentMonth - 1;
+        xTimes.push(previousMonth);
+      }
+      xTimes.push(currentMonth);
+      xValues = [];
+      xTimes.forEach(el => {
+        // yValues.push(...dataByMonth[el])
+        // console.log(el)
+        // console.log('Chckikng data..', dataByMonth[el])
+        dataByMonth[el].forEach(elem => {
+          xValues.push(elem.rate)
+        })
+      })
+      return xValues;
+    }
+    function updateChart(currentMonth) {
+      // console.log(currentMonth)
+      xValues = getXValues(currentMonth, window.periodicData.months, window.periodicData.dataByMonth)
+      yValues = getYValues(currentMonth, window.periodicData.months, window.periodicData.dataByMonth)
+      console.log(xValues)
+      oChart.data.datasets[0].data = xValues;
+      oChart.data.labels = yValues;
+      data = oChart.data;
+      oChart.config.data = data;
+      oChart.update();
+    }
+
+    selectElem = document.getElementById("dateSelect");
+    selectElem.onchange = (ev) => {
+          updateChart(ev.target.value)
+    }
+   
+  </script>
+
+  <script>
+    const graph = document.getElementById("graph").getContext("2d");
+
+    Chart.defaults.global.defaultFontSize = 18;
+
+    oChart = new Chart(graph, {
+      type: "line", // bar, horizontalBar, pie, line, doughnut, radar, polarArea
+      data: {
+        labels: [
+          "Abidjan",
+          "Alger",
+          "Bamako",
+          "Casablanca",
+          "Dakar",
+          "Kinshasa",
+          "Montreal",
+          "Paris",
+        ],
+        datasets: [
+          {
+            label: "Price Chart",
+            data: [500, 600, 700],
+            backgroundColor: 'lightblue',
+            textColor: 'black',
+            borderColor: 'royalblue',
+            hoverBorderWidth: 3,
+          },
+        ],
+      },
+      options: {
+        title: {
+          display: true,
+          text: "Naira - Dollar Price Chart",
+          fontSize: 24,
+        },
+        legend: {
+          display: true,
+        },
+        // start at 500
+        scales: {
+          yAxes: [
+            {
+              ticks: {
+                min: 500, max: 800, stepSize: 5,
+                // beginAtZero: true,
+              },
+            },
+          ],
+        },
+        layout: {
+          padding: {
+            left: 55,
+            right: 55,
+            // top: 25,
+            // bottom: 50
+          },
+
+        },
+      },
+    });
+  </script>
+</body>
+
+</html>
